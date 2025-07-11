@@ -1,0 +1,168 @@
+<div class="chat-container" (click)="onUserInteraction()">
+  <!-- Header -->
+  <mat-toolbar color="primary" class="chat-header">
+    <button mat-icon-button (click)="goBack()" matTooltip="Volver a salas (mantener conexión)">
+      <mat-icon>arrow_back</mat-icon>
+    </button>
+
+    <div class="room-info">
+      <span class="room-name">{{ room?.name }}</span>
+      <span class="room-description">{{ room?.description }}</span>
+    </div>
+
+    <span class="spacer"></span>
+
+    <div class="connection-status">
+      <mat-icon [style.color]="getConnectionStatusColor()">
+        {{ isConnected ? 'wifi' : 'wifi_off' }}
+      </mat-icon>
+      <span class="status-text">{{ isConnected ? 'Conectado' : 'Desconectado' }}</span>
+    </div>
+
+    <button mat-icon-button (click)="leaveRoom()" matTooltip="Salir completamente de la sala">
+      <mat-icon>exit_to_app</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="chat-content">
+    <!-- Loading -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Cargando sala...</p>
+    </div>
+
+    <!-- Room Content -->
+    <div *ngIf="!isLoading && room" class="room-content">
+      <!-- Members List -->
+      <mat-card class="members-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>group</mat-icon>
+            Miembros ({{ room.members.length }}/{{ room.maxMembers }})
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <mat-list>
+            <mat-list-item *ngFor="let member of room.members" class="member-item">
+              <mat-icon matListItemIcon>person</mat-icon>
+              <div matListItemTitle class="member-name">
+                {{ member.username }}
+                <mat-chip *ngIf="speakingUsers.has(member.username)" color="accent" selected class="speaking-chip">
+                  <mat-icon>mic</mat-icon>
+                  Hablando
+                </mat-chip>
+                <mat-chip *ngIf="audioReceivedUsers.has(member.username)" color="primary" selected class="audio-received-chip">
+                  <mat-icon>volume_up</mat-icon>
+                  Audio
+                </mat-chip>
+                <mat-chip *ngIf="isUserAdmin(member)" color="warn" selected class="admin-chip">
+                  <mat-icon>admin_panel_settings</mat-icon>
+                  Admin
+                </mat-chip>
+              </div>
+            </mat-list-item>
+          </mat-list>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Voice Controls -->
+      <mat-card class="controls-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>mic</mat-icon>
+            Controles de Voz
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="voice-controls">
+            <div class="control-buttons">
+              <button
+                mat-fab
+                [color]="isSpeaking ? 'warn' : 'primary'"
+                (mousedown)="startSpeaking()"
+                (mouseup)="stopSpeaking()"
+                (mouseleave)="stopSpeaking()"
+                (touchstart)="startSpeaking()"
+                (touchend)="stopSpeaking()"
+                class="speak-button"
+                [class.speaking]="isSpeaking"
+                matTooltip="Presiona y mantén para hablar">
+                <mat-icon>{{ isSpeaking ? 'stop' : 'mic' }}</mat-icon>
+              </button>
+            </div>
+
+            <div class="test-controls">
+              <button
+                mat-raised-button
+                color="accent"
+                (click)="testAudio()"
+                matTooltip="Generar audio de prueba">
+                <mat-icon>play_arrow</mat-icon>
+                Test Audio
+              </button>
+
+              <button
+                *ngIf="!audioActivated"
+                mat-raised-button
+                color="warn"
+                (click)="activateAudio()"
+                matTooltip="Activar audio (requerido para escuchar en Chrome)"
+                class="activate-audio-button">
+                <mat-icon>volume_up</mat-icon>
+                Activar Audio
+              </button>
+            </div>
+
+            <div class="speaking-indicator" *ngIf="isSpeaking">
+              <mat-icon class="pulse">radio_button_checked</mat-icon>
+              <span>Estás hablando...</span>
+            </div>
+          </div>
+
+          <div class="instructions">
+            <p><strong>Instrucciones:</strong></p>
+            <ul>
+              <li><strong>Presiona y mantén</strong> el botón rojo para hablar</li>
+              <li><strong>Suelta</strong> el botón para dejar de hablar</li>
+              <li><strong>Alternativa:</strong> Usa la <strong>barra espaciadora</strong> (presiona para hablar, suelta para callar)</li>
+              <li>Los demás miembros verán cuando estés hablando</li>
+              <li>Asegúrate de tener un micrófono conectado</li>
+              <li>Funciona con mouse, pantalla táctil y teclado</li>
+            </ul>
+          </div>
+        </mat-card-content>
+      </mat-card>
+
+      <!-- Room Info -->
+      <mat-card class="info-card">
+        <mat-card-header>
+          <mat-card-title>
+            <mat-icon>info</mat-icon>
+            Información de la Sala
+          </mat-card-title>
+        </mat-card-header>
+
+        <mat-card-content>
+          <div class="room-details">
+            <p><strong>Nombre:</strong> {{ room.name }}</p>
+            <p><strong>Descripción:</strong> {{ room.description }}</p>
+            <p><strong>Creada por:</strong> {{ room.createdBy.username }}</p>
+            <p><strong>Fecha de creación:</strong> {{ room.createdAt | date:'short' }}</p>
+            <p><strong>Estado:</strong>
+              <mat-chip [color]="room.isActive ? 'primary' : 'warn'" selected>
+                {{ room.isActive ? 'Activa' : 'Inactiva' }}
+              </mat-chip>
+            </p>
+            <p><strong>Privacidad:</strong>
+              <mat-chip [color]="room.isPrivate ? 'warn' : 'primary'" selected>
+                {{ room.isPrivate ? 'Privada' : 'Pública' }}
+              </mat-chip>
+            </p>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div>
