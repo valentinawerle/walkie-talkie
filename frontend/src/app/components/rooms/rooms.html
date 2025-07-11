@@ -1,0 +1,151 @@
+<div class="rooms-container">
+  <!-- Header -->
+  <mat-toolbar color="primary" class="rooms-header">
+    <span class="header-title">
+      <mat-icon>forum</mat-icon>
+      Salas de Chat
+    </span>
+    <span class="spacer"></span>
+    <span class="user-info">
+      <mat-icon>person</mat-icon>
+      {{ currentUser?.username }}
+    </span>
+    <button mat-icon-button (click)="logout()" matTooltip="Cerrar sesión">
+      <mat-icon>logout</mat-icon>
+    </button>
+  </mat-toolbar>
+
+  <div class="content">
+    <!-- Loading Spinner -->
+    <div *ngIf="isLoading" class="loading-container">
+      <mat-spinner diameter="50"></mat-spinner>
+      <p>Cargando salas...</p>
+    </div>
+
+    <!-- My Rooms Section -->
+    <div *ngIf="!isLoading && myRooms.length > 0" class="section">
+      <h2 class="section-title">
+        <mat-icon>star</mat-icon>
+        Mis Salas
+      </h2>
+      <div class="rooms-grid">
+        <mat-card *ngFor="let room of myRooms" class="room-card my-room">
+          <mat-card-header>
+            <mat-card-title>{{ room.name }}</mat-card-title>
+            <mat-card-subtitle>{{ room.description }}</mat-card-subtitle>
+            <div class="room-badges">
+              <mat-chip *ngIf="isUserAdmin(room)" color="accent" selected>
+                <mat-icon>admin_panel_settings</mat-icon>
+                Admin
+              </mat-chip>
+              <mat-chip *ngIf="room.isPrivate" color="warn" selected>
+                <mat-icon>lock</mat-icon>
+                Privada
+              </mat-chip>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="room-stats">
+              <span class="member-count">
+                <mat-icon>group</mat-icon>
+                {{ getMemberCount(room) }}/{{ getMaxMembers(room) }}
+              </span>
+              <span class="created-by">
+                Creada por: {{ room.createdBy.username }}
+              </span>
+            </div>
+          </mat-card-content>
+
+          <mat-card-actions>
+            <button mat-raised-button color="primary" (click)="enterRoom(room)">
+              <mat-icon>chat</mat-icon>
+              Entrar
+            </button>
+            <button mat-button color="warn" (click)="leaveRoom(room)">
+              <mat-icon>exit_to_app</mat-icon>
+              Salir
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- All Rooms Section -->
+    <div *ngIf="!isLoading" class="section">
+      <h2 class="section-title">
+        <mat-icon>public</mat-icon>
+        Todas las Salas
+      </h2>
+      <div class="rooms-grid">
+        <mat-card *ngFor="let room of rooms" class="room-card">
+          <mat-card-header>
+            <mat-card-title>{{ room.name }}</mat-card-title>
+            <mat-card-subtitle>{{ room.description }}</mat-card-subtitle>
+            <div class="room-badges">
+              <mat-chip *ngIf="isUserAdmin(room)" color="accent" selected>
+                <mat-icon>admin_panel_settings</mat-icon>
+                Admin
+              </mat-chip>
+              <mat-chip *ngIf="room.isPrivate" color="warn" selected>
+                <mat-icon>lock</mat-icon>
+                Privada
+              </mat-chip>
+              <mat-chip *ngIf="isUserInRoom(room)" color="primary" selected>
+                <mat-icon>check_circle</mat-icon>
+                Miembro
+              </mat-chip>
+            </div>
+          </mat-card-header>
+
+          <mat-card-content>
+            <div class="room-stats">
+              <span class="member-count">
+                <mat-icon>group</mat-icon>
+                {{ getMemberCount(room) }}/{{ getMaxMembers(room) }}
+              </span>
+              <span class="created-by">
+                Creada por: {{ room.createdBy.username }}
+              </span>
+            </div>
+          </mat-card-content>
+
+          <mat-card-actions>
+            <button
+              *ngIf="!isUserInRoom(room)"
+              mat-raised-button
+              color="primary"
+              (click)="joinRoom(room)"
+              [disabled]="getMemberCount(room) >= getMaxMembers(room)">
+              <mat-icon>add</mat-icon>
+              Unirse
+            </button>
+            <button
+              *ngIf="isUserInRoom(room)"
+              mat-raised-button
+              color="primary"
+              (click)="enterRoom(room)">
+              <mat-icon>chat</mat-icon>
+              Entrar
+            </button>
+            <button
+              *ngIf="isUserInRoom(room)"
+              mat-button
+              color="warn"
+              (click)="leaveRoom(room)">
+              <mat-icon>exit_to_app</mat-icon>
+              Salir
+            </button>
+          </mat-card-actions>
+        </mat-card>
+      </div>
+    </div>
+
+    <!-- Empty State -->
+    <div *ngIf="!isLoading && rooms.length === 0" class="empty-state">
+      <mat-icon class="empty-icon">forum</mat-icon>
+      <h3>No hay salas disponibles</h3>
+      <p>¡Sé el primero en crear una sala de chat!</p>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,27 @@
+{
+  "server": {
+    "port": 3030,
+    "host": "0.0.0.0"
+  },
+  "database": {
+    "uri": "mongodb://localhost:27017/walkie-talkie-dev",
+    "options": {
+      "useNewUrlParser": true,
+      "useUnifiedTopology": true
+    }
+  },
+  "jwt": {
+    "secret": "dev-secret-key-change-in-production",
+    "expiresIn": "24h"
+  },
+  "cors": {
+    "origin": ["http://localhost:3000", "http://localhost:4200"],
+    "credentials": true
+  },
+  "websocket": {
+    "cors": {
+      "origin": ["http://localhost:3000", "http://localhost:4200"],
+      "credentials": true
+    }
+  }
+}
